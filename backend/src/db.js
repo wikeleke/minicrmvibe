@@ -1,8 +1,29 @@
 import mongoose from 'mongoose';
 
-export async function connectDB() {
-  const uri = process.env.MONGODB_URI_STD || process.env.MONGODB_URI;
+mongoose.set('bufferCommands', false);
+
+function getUri() {
+  return process.env.MONGODB_URI_STD || process.env.MONGODB_URI;
+}
+
+export function dbReady() {
+  return mongoose.connection.readyState === 1;
+}
+
+export async function connectDB({ retries = 5, delayMs = 2000 } = {}) {
+  const uri = getUri();
   if (!uri) throw new Error('MONGODB_URI o MONGODB_URI_STD no definida en .env/.ENV');
-  await mongoose.connect(uri);
-  console.log('MongoDB Atlas conectado');
+
+  for (let attempt = 1; attempt <= retries; attempt += 1) {
+    try {
+      await mongoose.connect(uri);
+      console.log('MongoDB Atlas conectado');
+      return;
+    } catch (err) {
+      const last = attempt === retries;
+      console.error(`Error de conexión a MongoDB (intento ${attempt}/${retries}): ${err.message}`);
+      if (last) throw err;
+      await new Promise(resolve => setTimeout(resolve, delayMs));
+    }
+  }
 }

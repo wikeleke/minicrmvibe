@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import express from 'express';
 import cors from 'cors';
-import { connectDB } from './db.js';
+import { connectDB, dbReady } from './db.js';
 import contactsRouter from './routes/contacts.js';
 import usersRouter from './routes/users.js';
 
@@ -22,9 +22,18 @@ const PORT = process.env.PORT ?? 3000;
 
 app.use(cors());
 app.use(express.json());
+app.get('/api/health', (req, res) => {
+  res.json({ ok: true, db: dbReady() ? 'connected' : 'disconnected' });
+});
+app.use((req, res, next) => {
+  if (!dbReady()) return res.status(503).json({ error: 'Base de datos no conectada' });
+  return next();
+});
 app.use('/api/contacts', contactsRouter);
 app.use('/api/users', usersRouter);
 
-await connectDB();
-
 app.listen(PORT, () => console.log(`API en http://localhost:${PORT}`));
+
+connectDB().catch(() => {
+  console.error('No se pudo conectar a MongoDB. Reintentará al reiniciar.');
+});
