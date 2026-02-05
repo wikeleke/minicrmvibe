@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "node src/index.js",
+    "dev:cursor": "bash run-cursor.sh",
     "start": "node src/index.js"
   },
   "dependencies": {

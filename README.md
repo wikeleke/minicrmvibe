@@ -22,6 +22,7 @@ cp .env.example .env
 # Editar .env y definir:
 #   PORT=3000
 #   MONGODB_URI=mongodb+srv://...
+#   (alternativa sin SRV) MONGODB_URI_STD=mongodb://host1,host2,host3/...
 npm install
 npm run dev
 ```
@@ -40,6 +41,6 @@ La app se abre en `http://localhost:5173` y usa el proxy hacia el backend.
 
 ## Uso
 
-1. Arrancar primero el backend (con `MONGODB_URI` válida en `.env`).
+1. Arrancar primero el backend (con `MONGODB_URI` válida o `MONGODB_URI_STD`).
 2. Arrancar el frontend.
 3. En el navegador: listar contactos, crear, editar y eliminar. Estados: lead → contacto → cliente.

@@ -32,8 +32,17 @@ app.use((req, res, next) => {
 app.use('/api/contacts', contactsRouter);
 app.use('/api/users', usersRouter);
 
-app.listen(PORT, () => console.log(`API en http://localhost:${PORT}`));
+async function startServer() {
+  try {
+    await connectDB();
+    app.listen(PORT, () => {
+      console.log(`API en http://localhost:${PORT}`);
+      console.log('MongoDB conectado');
+    });
+  } catch (err) {
+    console.error('No se pudo iniciar el servidor:', err.message);
+    process.exit(1);
+  }
+}
 
-connectDB().catch(() => {
-  console.error('No se pudo conectar a MongoDB. Reintentará al reiniciar.');
-});
+startServer();
