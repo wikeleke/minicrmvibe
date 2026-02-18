@@ -1,5 +1,6 @@
 const BASE = '/api/contacts';
 const USERS = '/api/users';
+const CHAT = '/api/chat';
 const roleHeaders = () => ({ 'x-user-role': 'admin' });
 
 export async function getContacts() {
@@ -62,4 +63,23 @@ export async function updateUser(id, data) {
 export async function deleteUser(id) {
   const r = await fetch(`${USERS}/${id}`, { method: 'DELETE', headers: roleHeaders() });
   if (!r.ok) throw new Error(await r.text());
+}
+
+export async function sendChatMessage(message, sessionId) {
+  const r = await fetch(CHAT, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message, sessionId: sessionId || undefined }),
+  });
+  if (!r.ok) {
+    const text = await r.text();
+    throw new Error(text || 'Error en el chat');
+  }
+  return r.json();
+}
+
+export async function getChatConversation(sessionId) {
+  const r = await fetch(`${CHAT}/${sessionId}`);
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
 }

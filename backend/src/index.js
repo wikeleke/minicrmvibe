@@ -6,6 +6,7 @@ import cors from 'cors';
 import { connectDB, dbReady } from './db.js';
 import contactsRouter from './routes/contacts.js';
 import usersRouter from './routes/users.js';
+import chatRouter from './routes/chat.js';
 
 const cwd = process.cwd();
 const envPath = fs.existsSync(path.join(cwd, '.env'))
@@ -31,6 +32,7 @@ app.use((req, res, next) => {
 });
 app.use('/api/contacts', contactsRouter);
 app.use('/api/users', usersRouter);
+app.use('/api/chat', chatRouter);
 
 async function startServer() {
   try {

@@ -39,6 +39,15 @@ npm run dev
 
 La app se abre en `http://localhost:5173` y usa el proxy hacia el backend.
 
+## Despliegue en Vercel (frontend)
+
+Para que el frontend no muestre "NOT_FOUND" en Vercel:
+
+1. En el proyecto de Vercel: **Settings → General → Root Directory** → pon `frontend` y guarda.
+2. Vuelve a desplegar (Redeploy).
+
+El `frontend/vercel.json` ya incluye las reglas para que la SPA sirva bien. En producción necesitas un backend desplegado en otro servicio (Railway, Render, etc.) y definir la variable de entorno `VITE_API_URL` en Vercel con la URL de esa API.
+
 ## Uso
 
 1. Arrancar primero el backend (con `MONGODB_URI` válida o `MONGODB_URI_STD`).

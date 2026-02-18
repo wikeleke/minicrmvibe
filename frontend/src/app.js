@@ -1,6 +1,7 @@
 import {
   getContacts, createContact, updateContact, deleteContact,
   getUsers, createUser, updateUser, deleteUser,
+  sendChatMessage as apiSendChat,
 } from './api.js';
 
 let contacts = [];
@@ -12,6 +13,11 @@ let users = [];
 let editingUserId = null;
 let usersError = '';
 let errorMsg = '';
+let chatOpen = false;
+let chatMessages = [];
+let chatSessionId = null;
+let chatLoading = false;
+let chatError = '';
 
 function el(tag, attrs = {}, ...children) {
   const e = document.createElement(tag);
@@ -93,6 +99,37 @@ function setUsersOpen() {
   loadUsers();
 }
 
+function setChatOpen() {
+  chatOpen = true;
+  render();
+}
+
+async function submitChat(e) {
+  e.preventDefault();
+  const input = document.getElementById('chat-input');
+  const text = input?.value?.trim();
+  if (!text || chatLoading) return;
+
+  chatError = '';
+  chatLoading = true;
+  chatMessages.push({ role: 'user', content: text });
+  input.value = '';
+  render();
+
+  try {
+    const res = await apiSendChat(text, chatSessionId);
+    chatSessionId = res.sessionId;
+    chatMessages = res.messages || [];
+    chatError = '';
+  } catch (err) {
+    chatError = err.message;
+    chatMessages.pop();
+  } finally {
+    chatLoading = false;
+    render();
+  }
+}
+
 function setUserEditing(u) {
   editingUserId = u?._id ?? null;
   usersOpen = true;
@@ -166,6 +203,55 @@ function render() {
   const contactos = contacts.filter(c => c.status === 'contacto').length;
   const clientes = contacts.filter(c => c.status === 'cliente').length;
   root.replaceChildren(
+    el('div', { class: 'fixed bottom-6 right-6 z-40 flex flex-col items-end gap-2' },
+      chatOpen ? el('div', { class: 'w-80 h-96 flex flex-col rounded-2xl bg-slate-900 border border-slate-700 shadow-2xl overflow-hidden' },
+        el('div', { class: 'flex items-center justify-between p-3 border-b border-slate-800' },
+          el('h3', { class: 'text-sm font-semibold flex items-center gap-2' },
+            el('span', { class: 'w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse' }),
+            'Asistente'
+          ),
+          el('button', {
+            class: 'p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800',
+            onclick: () => { chatOpen = false; render(); },
+          }, '✕')
+        ),
+        el('div', { class: 'flex-1 overflow-y-auto p-3 space-y-3' },
+          chatMessages.length === 0
+            ? el('p', { class: 'text-slate-500 text-xs text-center py-6' },
+                'Pregunta cómo usar MiniCRM. Ej: "¿Cómo agrego un contacto?"'
+              )
+            : chatMessages.map((m) =>
+                m.role === 'user'
+                  ? el('div', { class: 'flex justify-end' },
+                      el('div', { class: 'max-w-[90%] rounded-xl rounded-br-sm bg-sky-600/80 text-white px-3 py-2 text-xs' }, m.content)
+                    )
+                  : el('div', { class: 'flex justify-start' },
+                      el('div', { class: 'max-w-[90%] rounded-xl rounded-bl-sm bg-slate-800 border border-slate-700 text-slate-200 px-3 py-2 text-xs leading-relaxed' }, m.content)
+                    )
+              )
+        ),
+        chatError ? el('div', { class: 'mx-3 mb-1 p-2 rounded bg-red-500/10 text-red-400 text-xs' }, chatError) : null,
+        el('form', { onsubmit: submitChat, class: 'p-3 border-t border-slate-800 flex gap-2' },
+          el('input', {
+            id: 'chat-input',
+            type: 'text',
+            placeholder: chatLoading ? 'Esperando…' : 'Escribe aquí…',
+            disabled: chatLoading,
+            class: 'flex-1 rounded-lg bg-slate-800 border border-slate-600 px-2.5 py-2 text-xs focus:ring-2 focus:ring-sky-500 outline-none disabled:opacity-50',
+          }),
+          el('button', {
+            type: 'submit',
+            disabled: chatLoading,
+            class: 'px-3 py-2 rounded-lg bg-sky-600 hover:bg-sky-500 disabled:opacity-50 text-white text-xs font-medium',
+          }, chatLoading ? '…' : 'Enviar')
+        )
+      ) : null,
+      el('button', {
+        class: 'w-14 h-14 rounded-full bg-sky-600 hover:bg-sky-500 text-white shadow-lg hover:shadow-xl transition-all flex items-center justify-center text-xl',
+        onclick: () => { chatOpen = !chatOpen; render(); },
+        title: chatOpen ? 'Cerrar asistente' : 'Abrir asistente',
+      }, '💬')
+    ),
     el('header', { class: 'border-b border-slate-800 bg-slate-900/50 px-6 py-4' },
       el('div', { class: 'flex items-center justify-between' },
         el('div', {},
