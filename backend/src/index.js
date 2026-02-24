@@ -20,8 +20,42 @@ else dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT ?? 3000;
+const FRONTEND_URL = process.env.FRONTEND_URL || '';
+const CORS_ORIGINS = (process.env.CORS_ORIGINS || '')
+  .split(',')
+  .map(origin => origin.trim())
+  .filter(Boolean);
+const allowedOrigins = new Set([
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  FRONTEND_URL.trim(),
+  ...CORS_ORIGINS,
+].filter(Boolean));
 
-app.use(cors());
+function isVercelOrigin(origin) {
+  try {
+    const { protocol, hostname } = new URL(origin);
+    return protocol === 'https:' && hostname.endsWith('.vercel.app');
+  } catch {
+    return false;
+  }
+}
+
+function isAllowedOrigin(origin) {
+  if (!origin) return true;
+  if (allowedOrigins.has(origin)) return true;
+  if (isVercelOrigin(origin)) return true;
+  return false;
+}
+
+app.use(cors({
+  origin(origin, callback) {
+    if (isAllowedOrigin(origin)) return callback(null, true);
+    return callback(new Error(`Origen no permitido por CORS: ${origin}`));
+  },
+  methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'x-user-role'],
+}));
 app.use(express.json());
 app.get('/api/health', (req, res) => {
   res.json({ ok: true, db: dbReady() ? 'connected' : 'disconnected' });

@@ -1,6 +1,7 @@
-const BASE = '/api/contacts';
-const USERS = '/api/users';
-const CHAT = '/api/chat';
+const API_ORIGIN = (import.meta.env.VITE_API_URL || 'https://minicrmvibe-zn3t.onrender.com').replace(/\/$/, '');
+const BASE = `${API_ORIGIN}/api/contacts`;
+const USERS = `${API_ORIGIN}/api/users`;
+const CHAT = `${API_ORIGIN}/api/chat`;
 const roleHeaders = () => ({ 'x-user-role': 'admin' });
 
 export async function getContacts() {
